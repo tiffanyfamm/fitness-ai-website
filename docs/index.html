@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>FitBuddy AI — Your Personal Fitness Copilot</title>
+  <meta name="description" content="FitBuddy AI helps you plan workouts with an engaging AI chat experience." />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css" />
+</head>
+
+<body>
+  <!-- HEADER -->
+  <header class="site-header">
+    <div class="container nav">
+      <div class="brand">
+        <img src="assets/logo.svg" alt="FitBuddy AI" class="logo" />
+        <span>FitBuddy AI</span>
+      </div>
+      <nav class="menu">
+        <a href="#features">Features</a>
+        <a href="#agent" class="cta">Get Started</a>
+      </nav>
+    </div>
+  </header>
+
+  <main>
+    <!-- HERO -->
+    <section class="hero">
+      <div class="container hero-grid">
+        <div class="hero-copy">
+          <h1>Your Personal Fitness Buddy</h1>
+          <p>
+            Meet FitBuddy AI — a smart, friendly assistant that designs personalised workouts
+            based on your goals and preferences.
+          </p>
+
+          <div class="hero-badges">
+            <span>24/7 Chat</span>
+            <span>Personalised Plans</span>
+            <span>Adaptive Workouts</span>
+          </div>
+        </div>
+
+        <div class="hero-art">
+          <div class="phone-mock">
+            <div class="status-bar"></div>
+            <div class="mock-chat">
+              <div class="bubble ai">
+                Hello! I'm FitBuddy AI, your fitness coach 💪<br>
+                To get started, I need a few details from you:<br>
+                • How many minutes do you want your workout to be?<br>
+                • What is your target muscle group?<br>
+                • What is your difficulty level (beginner, intermediate, or advanced)?<br>
+                • Are you at the gym or at home?
+              </div>
+
+              <div class="bubble user">
+                10 Minutes, Upper Body, Gym.
+              </div>
+
+              <div class="bubble ai">
+                Great! Here's a quick 10-minute upper body workout for the gym:<br>
+                1. Warm-up: 2 minutes of light cardio<br>
+                2. Push-ups: 3 sets of 12 reps<br>
+                3. Dumbbell Rows: 3 sets of 10 reps per arm<br>
+                4. Shoulder Press: 3 sets of 12 reps<br>
+                5. Cool-down: 2 minutes of stretching<br>
+                Let me know if you'd like modifications!
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="gradient-blob"></div>
+    </section>
+
+    <!-- FEATURES -->
+    <section id="features" class="features">
+      <div class="container">
+        <h2>Why Choose FitBuddy AI?</h2>
+        <p class="sub">
+          FitBuddy AI provides intelligent, personalised fitness support through adaptive
+          AI-driven conversations.
+        </p>
+
+        <div class="feature-grid">
+          <div class="feature">
+            <h3>Adaptive Workouts</h3>
+            <p>Plans adjust to your time, equipment, and fitness level.</p>
+          </div>
+          <div class="feature">
+            <h3>24/7 Available</h3>
+            <p>Access fitness guidance anytime, anywhere.</p>
+          </div>
+          <div class="feature">
+            <h3>Personalised Workouts</h3>
+            <p>Recommendations tailored to your goals and preferences.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- AI AGENT -->
+    <section id="agent" class="demo">
+      <div class="container demo-grid">
+
+        <div class="agent-title">
+          <h2>FitBuddy AI</h2>
+          <p class="sub">Your personal fitness assistant</p>
+        </div>
+
+        <div class="chat-panel">
+          <div id="chatWindow" class="chat-window" aria-live="polite"></div>
+
+          <form id="chatForm" class="chat-form" autocomplete="off">
+            <input
+              id="chatInput"
+              type="text"
+              placeholder="Ask FitBuddy anything…"
+              required
+            />
+            <button type="submit" class="send">Send</button>
+          </form>
+
+          <div class="status" id="status"></div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- FOOTER -->
+  <footer class="site-footer">
+    <div class="container foot">
+      <span>© <span id="year"></span> FitBuddy AI</span>
+      <a href="#" class="small">Privacy</a>
+    </div>
+  </footer>
+
+  <script>
+    document.getElementById('year').textContent = new Date().getFullYear();
+  </script>
+  <script src="script.js"></script>
+</body>
+</html>
