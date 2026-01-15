@@ -1,4 +1,4 @@
-﻿/* FitBuddy AI — Live agent script */
+﻿/* FitBuddy AI  Live agent script */
 const chatWindow = document.getElementById('chatWindow');
 const chatForm = document.getElementById('chatForm');
 const chatInput = document.getElementById('chatInput');
@@ -43,6 +43,21 @@ function parseMinutes(text) {
   return null;
 }
 
+function parseAllInputs(text) {
+  const parts = text.split(/[,;\/]+/).map(p => p.trim());
+  const result = { minutes: null, muscle: null, difficulty: null, location: null };
+  
+  for (let part of parts) {
+    const mins = parseMinutes(part);
+    if (mins) result.minutes = mins;
+    if (/beginner|intermediate|advanced/i.test(part)) result.difficulty = part.toLowerCase();
+    if (/gym|home/i.test(part)) result.location = part.toLowerCase();
+    if (/legs|chest|back|arms|core|full.body|full\sbody|fullbody/i.test(part)) result.muscle = part.toLowerCase();
+  }
+  
+  return result;
+}
+
 function generateWorkout(minutes, muscle, difficulty, location) {
   const warmup = 3;
   const cooldown = 3;
@@ -83,7 +98,7 @@ function generateWorkout(minutes, muscle, difficulty, location) {
     for (let i = 0; i < 5; i++) {
       moves.push(pool[(r + i - 1) % pool.length]);
     }
-    plan += moves.join(' — ');
+    plan += moves.join('  ');
     plan += `\nWork: ${on}s on / ${off}s off per exercise\n\n`;
   }
 
@@ -100,7 +115,7 @@ function isGreeting(text) {
 function simulatedReply(userText) {
   const t = userText.toLowerCase();
   if (/plan|workout|train|routine/.test(t)) {
-    return "Tell me how long you have, which muscle group, your difficulty level, and whether you're at the gym or at home — I'll build a plan.";
+    return "Tell me how long you have, which muscle group, your difficulty level, and whether you're at the gym or at home  I'll build a plan.";
   }
   if (/diet|meal|nutrition|protein|calorie/.test(t)) {
     return "I can help with nutrition too, but let's focus on a workout right now. Tell me the time you have and target muscle.";
@@ -121,22 +136,34 @@ chatForm.addEventListener('submit', async (e) => {
   appendMessage(text, 'user');
 
   const typing = appendTyping();
-  setStatus('Thinking…');
+  setStatus('Thinking');
 
   try {
     await new Promise(r => setTimeout(r, 400));
+
+    // Check if user provided all 4 inputs at once
+    if (convo.stage === 'idle' && !isGreeting(text) && !/^(workout|plan|train|routine|session)/i.test(text)) {
+      const parsed = parseAllInputs(text);
+      if (parsed.minutes && parsed.muscle && parsed.difficulty && parsed.location) {
+        removeNode(typing);
+        const plan = generateWorkout(parsed.minutes, parsed.muscle, parsed.difficulty, parsed.location);
+        appendMessage(plan, 'ai');
+        setStatus('');
+        return;
+      }
+    }
 
     if (convo.stage === 'idle') {
       if (isGreeting(text)) {
         convo.stage = 'await_minutes';
         removeNode(typing);
-        appendMessage("Great — how many minutes do you have for this session?", 'ai');
+        appendMessage("Great  how many minutes do you have for this session?", 'ai');
         setStatus('');
         return;
       } else if (/workout|plan|train|routine|session/.test(text.toLowerCase())) {
         convo.stage = 'await_minutes';
         removeNode(typing);
-        appendMessage("Sure — how many minutes do you have?", 'ai');
+        appendMessage("Sure  how many minutes do you have?", 'ai');
         setStatus('');
         return;
       } else {
@@ -201,7 +228,7 @@ chatForm.addEventListener('submit', async (e) => {
     setStatus('');
   } catch (err) {
     removeNode(typing);
-    appendMessage("Sorry — something went wrong. Try again.", 'system');
+    appendMessage("Sorry  something went wrong. Try again.", 'system');
     setStatus(err.message || String(err));
   }
 });
