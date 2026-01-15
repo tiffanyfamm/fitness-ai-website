@@ -1,0 +1,16 @@
+{
+  "name": "fitness-ai-website",
+  "version": "1.0.0",
+  "private": true,
+  "description": "FitBuddy AI — landing + interactive chatbot demo with optional webhook/proxy",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "postinstall": "echo 'Install complete'"
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "express": "^4.18.2",
+    "node-fetch": "^2.6.13"
+  }
+}
