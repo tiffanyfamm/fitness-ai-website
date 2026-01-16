@@ -1,4 +1,4 @@
-﻿/* FitBuddy AI  Live agent script */
+﻿/* FitBuddy AI — Live agent script */
 const chatWindow = document.getElementById('chatWindow');
 const chatForm = document.getElementById('chatForm');
 const chatInput = document.getElementById('chatInput');
@@ -38,22 +38,33 @@ function setStatus(text) { statusEl.textContent = text || ''; }
 function parseMinutes(text) {
   const m = text.match(/(\d+)\s*(min|mins|minutes)?/i);
   if (m) return parseInt(m[1], 10);
-  const digits = text.match(/\d+/);
-  if (digits) return parseInt(digits[0], 10);
   return null;
 }
 
 function parseAllInputs(text) {
-  const parts = text.split(/[,;\/]+/).map(p => p.trim());
   const result = { minutes: null, muscle: null, difficulty: null, location: null };
+  const lowerText = text.toLowerCase();
   
-  for (let part of parts) {
-    const mins = parseMinutes(part);
-    if (mins) result.minutes = mins;
-    if (/beginner|intermediate|advanced/i.test(part)) result.difficulty = part.toLowerCase();
-    if (/gym|home/i.test(part)) result.location = part.toLowerCase();
-    if (/legs|chest|back|arms|core|full.body|full\sbody|fullbody/i.test(part)) result.muscle = part.toLowerCase();
-  }
+  // Extract minutes
+  const minsMatch = lowerText.match(/(\d+)\s*(min|mins|minutes)?/);
+  if (minsMatch) result.minutes = parseInt(minsMatch[1], 10);
+  
+  // Extract difficulty
+  if (/beginner/i.test(text)) result.difficulty = 'beginner';
+  else if (/advanced/i.test(text)) result.difficulty = 'advanced';
+  else if (/intermediate/i.test(text)) result.difficulty = 'intermediate';
+  
+  // Extract location
+  if (/gym/i.test(text)) result.location = 'gym';
+  else if (/home/i.test(text)) result.location = 'home';
+  
+  // Extract muscle group
+  if (/legs/i.test(text)) result.muscle = 'legs';
+  else if (/chest/i.test(text)) result.muscle = 'chest';
+  else if (/back/i.test(text)) result.muscle = 'back';
+  else if (/arms/i.test(text)) result.muscle = 'arms';
+  else if (/core/i.test(text)) result.muscle = 'core';
+  else if (/full.?body|fullbody/i.test(text)) result.muscle = 'full body';
   
   return result;
 }
@@ -98,7 +109,7 @@ function generateWorkout(minutes, muscle, difficulty, location) {
     for (let i = 0; i < 5; i++) {
       moves.push(pool[(r + i - 1) % pool.length]);
     }
-    plan += moves.join('  ');
+    plan += moves.join(' — ');
     plan += `\nWork: ${on}s on / ${off}s off per exercise\n\n`;
   }
 
@@ -112,18 +123,12 @@ function isGreeting(text) {
   return /^(hi|hello|hey|hey there)/i.test(text.trim());
 }
 
-function simulatedReply(userText) {
-  const t = userText.toLowerCase();
-  if (/plan|workout|train|routine/.test(t)) {
-    return "Tell me how long you have, which muscle group, your difficulty level, and whether you're at the gym or at home  I'll build a plan.";
-  }
-  if (/diet|meal|nutrition|protein|calorie/.test(t)) {
-    return "I can help with nutrition too, but let's focus on a workout right now. Tell me the time you have and target muscle.";
-  }
-  if (/cardio|fat|lose/.test(t)) {
-    return "For fat loss I recommend a mix of intervals and resistance work. Tell me minutes and preferred muscle focus and I'll create a session.";
-  }
-  return "Got it! Say 'hi' to start a guided session, or tell me you want a workout and include time, muscle group, difficulty, and location.";
+function getMissingField(parsed, currentMin, currentMuscle, currentDiff, currentLoc) {
+  if (!currentMin && !parsed.minutes) return 'minutes';
+  if (!currentMuscle && !parsed.muscle) return 'muscle';
+  if (!currentDiff && !parsed.difficulty) return 'difficulty';
+  if (!currentLoc && !parsed.location) return 'location';
+  return null;
 }
 
 appendMessage("Hello! I'm FitBuddy AI, your fitness coach. To get started, I need a few details from you:\nHow many minutes do you want your workout to be?\nWhat is your target muscle group?\nWhat is your difficulty level (beginner, intermediate, or advanced)?\nAre you at the gym or at home?", 'ai');
@@ -136,99 +141,94 @@ chatForm.addEventListener('submit', async (e) => {
   appendMessage(text, 'user');
 
   const typing = appendTyping();
-  setStatus('Thinking');
+  setStatus('Thinking…');
 
   try {
     await new Promise(r => setTimeout(r, 400));
 
-    // Check if user provided all 4 inputs at once
-    if (convo.stage === 'idle' && !isGreeting(text) && !/^(workout|plan|train|routine|session)/i.test(text)) {
-      const parsed = parseAllInputs(text);
-      if (parsed.minutes && parsed.muscle && parsed.difficulty && parsed.location) {
+    const parsed = parseAllInputs(text);
+
+    // If user said hi, start asking
+    if (convo.stage === 'idle' && isGreeting(text)) {
+      convo.stage = 'await_minutes';
+      removeNode(typing);
+      appendMessage("Great — how many minutes do you have for this session?", 'ai');
+      setStatus('');
+      return;
+    }
+
+    // If idle and user provides some info, smart fill and ask for missing
+    if (convo.stage === 'idle' && !isGreeting(text)) {
+      convo.minutes = parsed.minutes || convo.minutes;
+      convo.muscle = parsed.muscle || convo.muscle;
+      convo.difficulty = parsed.difficulty || convo.difficulty;
+      convo.location = parsed.location || convo.location;
+
+      // If all 4 are now filled, generate workout
+      if (convo.minutes && convo.muscle && convo.difficulty && convo.location) {
         removeNode(typing);
-        const plan = generateWorkout(parsed.minutes, parsed.muscle, parsed.difficulty, parsed.location);
+        const plan = generateWorkout(convo.minutes, convo.muscle, convo.difficulty, convo.location);
         appendMessage(plan, 'ai');
+        convo = { stage: 'idle', minutes: null, muscle: null, difficulty: null, location: null };
         setStatus('');
         return;
       }
-    }
 
-    if (convo.stage === 'idle') {
-      if (isGreeting(text)) {
+      // Otherwise ask for the first missing field
+      removeNode(typing);
+      if (!convo.minutes) {
         convo.stage = 'await_minutes';
-        removeNode(typing);
-        appendMessage("Great  how many minutes do you have for this session?", 'ai');
-        setStatus('');
-        return;
-      } else if (/workout|plan|train|routine|session/.test(text.toLowerCase())) {
-        convo.stage = 'await_minutes';
-        removeNode(typing);
-        appendMessage("Sure  how many minutes do you have?", 'ai');
-        setStatus('');
-        return;
-      } else {
-        removeNode(typing);
-        appendMessage(simulatedReply(text), 'ai');
-        setStatus('');
-        return;
-      }
-    }
-
-    if (convo.stage === 'await_minutes') {
-      const mins = parseMinutes(text);
-      if (mins && mins >= 5) {
-        convo.minutes = mins;
+        appendMessage("How many minutes do you have for this session?", 'ai');
+      } else if (!convo.muscle) {
         convo.stage = 'await_muscle';
-        removeNode(typing);
         appendMessage("Which muscle group would you like to focus on? (e.g., full body, legs, chest, back, arms, core)", 'ai');
-        setStatus('');
-        return;
-      } else {
-        removeNode(typing);
-        appendMessage("I didn't catch a valid number of minutes (e.g., 30). How many minutes do you have?", 'ai');
-        setStatus('');
-        return;
+      } else if (!convo.difficulty) {
+        convo.stage = 'await_difficulty';
+        appendMessage("What is your difficulty level (beginner, intermediate, or advanced)?", 'ai');
+      } else if (!convo.location) {
+        convo.stage = 'await_location';
+        appendMessage("Will this be at the gym or at home?", 'ai');
       }
-    }
-
-    if (convo.stage === 'await_muscle') {
-      convo.muscle = text;
-      convo.stage = 'await_difficulty';
-      removeNode(typing);
-      appendMessage("What is your difficulty level (beginner, intermediate, or advanced)?", 'ai');
       setStatus('');
       return;
     }
 
-    if (convo.stage === 'await_difficulty') {
-      convo.difficulty = text;
-      convo.stage = 'await_location';
-      removeNode(typing);
-      appendMessage("Will this be at the gym or at home?", 'ai');
-      setStatus('');
-      return;
-    }
+    // Fill in parsed data
+    if (parsed.minutes) convo.minutes = parsed.minutes;
+    if (parsed.muscle) convo.muscle = parsed.muscle;
+    if (parsed.difficulty) convo.difficulty = parsed.difficulty;
+    if (parsed.location) convo.location = parsed.location;
 
-    if (convo.stage === 'await_location') {
-      convo.location = text;
-      const minutes = convo.minutes || 20;
-      const muscle = convo.muscle || 'full body';
-      const difficulty = convo.difficulty || 'intermediate';
-      const location = convo.location || 'home';
-      const plan = generateWorkout(minutes, muscle, difficulty, location);
+    // Check if all 4 fields are now complete
+    if (convo.minutes && convo.muscle && convo.difficulty && convo.location) {
       removeNode(typing);
+      const plan = generateWorkout(convo.minutes, convo.muscle, convo.difficulty, convo.location);
       appendMessage(plan, 'ai');
       convo = { stage: 'idle', minutes: null, muscle: null, difficulty: null, location: null };
       setStatus('');
       return;
     }
 
+    // Otherwise move to next missing field
     removeNode(typing);
-    appendMessage(simulatedReply(text), 'ai');
+    if (!convo.minutes) {
+      convo.stage = 'await_minutes';
+      appendMessage("How many minutes do you have for this session?", 'ai');
+    } else if (!convo.muscle) {
+      convo.stage = 'await_muscle';
+      appendMessage("Which muscle group would you like to focus on? (e.g., full body, legs, chest, back, arms, core)", 'ai');
+    } else if (!convo.difficulty) {
+      convo.stage = 'await_difficulty';
+      appendMessage("What is your difficulty level (beginner, intermediate, or advanced)?", 'ai');
+    } else if (!convo.location) {
+      convo.stage = 'await_location';
+      appendMessage("Will this be at the gym or at home?", 'ai');
+    }
     setStatus('');
+
   } catch (err) {
     removeNode(typing);
-    appendMessage("Sorry  something went wrong. Try again.", 'system');
+    appendMessage("Sorry — something went wrong. Try again.", 'system');
     setStatus(err.message || String(err));
   }
 });
