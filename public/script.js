@@ -1,4 +1,4 @@
-﻿/* FitBuddy AI — Live agent script */
+﻿/* FitBuddy AI  Live agent script */
 const chatWindow = document.getElementById('chatWindow');
 const chatForm = document.getElementById('chatForm');
 const chatInput = document.getElementById('chatInput');
@@ -45,20 +45,16 @@ function parseAllInputs(text) {
   const result = { minutes: null, muscle: null, difficulty: null, location: null };
   const lowerText = text.toLowerCase();
   
-  // Extract minutes
   const minsMatch = lowerText.match(/(\d+)\s*(min|mins|minutes)?/);
   if (minsMatch) result.minutes = parseInt(minsMatch[1], 10);
   
-  // Extract difficulty
   if (/beginner/i.test(text)) result.difficulty = 'beginner';
   else if (/advanced/i.test(text)) result.difficulty = 'advanced';
   else if (/intermediate/i.test(text)) result.difficulty = 'intermediate';
   
-  // Extract location
   if (/gym/i.test(text)) result.location = 'gym';
   else if (/home/i.test(text)) result.location = 'home';
   
-  // Extract muscle group
   if (/legs/i.test(text)) result.muscle = 'legs';
   else if (/chest/i.test(text)) result.muscle = 'chest';
   else if (/back/i.test(text)) result.muscle = 'back';
@@ -68,6 +64,35 @@ function parseAllInputs(text) {
   
   return result;
 }
+
+const exerciseVideos = {
+  'squats': 'https://www.youtube.com/watch?v=xqvCmoLULNY',
+  'reverse lunges': 'https://www.youtube.com/watch?v=FfYEGpKOfWs',
+  'glute bridges': 'https://www.youtube.com/watch?v=wPM8icPvOYU',
+  'jump squats': 'https://www.youtube.com/watch?v=gMNr84IkrAN',
+  'calf raises': 'https://www.youtube.com/watch?v=QcaP8MlxJ_0',
+  'push-ups': 'https://www.youtube.com/watch?v=IODxDxX7oi4',
+  'incline push-ups': 'https://www.youtube.com/watch?v=aYXwCgdeB9E',
+  'chest press': 'https://www.youtube.com/watch?v=VmB1G1XG240',
+  'chest fly': 'https://www.youtube.com/watch?v=ve2yJ-QNsKc',
+  'diamond push-ups': 'https://www.youtube.com/watch?v=C7EpU5lBnHI',
+  'bent-over rows': 'https://www.youtube.com/watch?v=N6RdyUUoHHY',
+  'supermans': 'https://www.youtube.com/watch?v=--IqtxJFapE',
+  'reverse flys': 'https://www.youtube.com/watch?v=PYVq55v0Jk4',
+  'single-arm rows': 'https://www.youtube.com/watch?v=WDUK1YWVN8A',
+  'deadlifts': 'https://www.youtube.com/watch?v=r4MzxtBKyNE',
+  'bicep curls': 'https://www.youtube.com/watch?v=ykJmrZ5v0Oo',
+  'tricep dips': 'https://www.youtube.com/watch?v=6VOD-VroIcs',
+  'hammer curls': 'https://www.youtube.com/watch?v=zC3nLlEvin4',
+  'overhead tricep extension': 'https://www.youtube.com/watch?v=3OwXGloFHvI',
+  'tricep pushdowns': 'https://www.youtube.com/watch?v=2-LAMRpjEiE',
+  'plank': 'https://www.youtube.com/watch?v=pSHjTRCQxIw',
+  'russian twists': 'https://www.youtube.com/watch?v=1m8oPwMLXkc',
+  'leg raises': 'https://www.youtube.com/watch?v=R7SmNcWpj1M',
+  'bicycle crunches': 'https://www.youtube.com/watch?v=9FGz7KwaQSY',
+  'mountain climbers': 'https://www.youtube.com/watch?v=kmL1-N_IPKI',
+  'jumping jacks': 'https://www.youtube.com/watch?v=c4DL0Gpcyn8'
+};
 
 function generateWorkout(minutes, muscle, difficulty, location) {
   const warmup = 3;
@@ -83,8 +108,8 @@ function generateWorkout(minutes, muscle, difficulty, location) {
 
   const exercises = {
     'legs': ['Squats', 'Reverse lunges', 'Glute bridges', 'Jump squats', 'Calf raises'],
-    'chest': ['Push-ups', 'Incline push-ups', 'Chest press (dumbbells)', 'Chest fly (dumbbells)', 'Diamond push-ups'],
-    'back': ['Bent-over rows', 'Supermans', 'Reverse flys', 'Single-arm rows', 'Deadlifts (if gym)'],
+    'chest': ['Push-ups', 'Incline push-ups', 'Chest press', 'Chest fly', 'Diamond push-ups'],
+    'back': ['Bent-over rows', 'Supermans', 'Reverse flys', 'Single-arm rows', 'Deadlifts'],
     'arms': ['Bicep curls', 'Tricep dips', 'Hammer curls', 'Overhead tricep extension', 'Tricep pushdowns'],
     'core': ['Plank', 'Russian twists', 'Leg raises', 'Bicycle crunches', 'Mountain climbers'],
     'full body': ['Jumping jacks', 'Push-ups', 'Squats', 'Mountain climbers', 'Plank']
@@ -104,13 +129,22 @@ function generateWorkout(minutes, muscle, difficulty, location) {
   plan += `Warm-up: ${warmup} min (dynamic mobility)\n\n`;
 
   for (let r = 1; r <= rounds; r++) {
-    plan += `Round ${r}: `;
+    plan += `Round ${r}:\n`;
     const moves = [];
     for (let i = 0; i < 5; i++) {
       moves.push(pool[(r + i - 1) % pool.length]);
     }
-    plan += moves.join(' — ');
-    plan += `\nWork: ${on}s on / ${off}s off per exercise\n\n`;
+    
+    for (let move of moves) {
+      const videoKey = move.toLowerCase();
+      const videoUrl = exerciseVideos[videoKey];
+      plan += ` ${move}`;
+      if (videoUrl) {
+        plan += ` - ${videoUrl}`;
+      }
+      plan += `\n`;
+    }
+    plan += `Work: ${on}s on / ${off}s off per exercise\n\n`;
   }
 
   plan += `Cooldown: ${cooldown} min (stretching)\n\n`;
@@ -123,14 +157,6 @@ function isGreeting(text) {
   return /^(hi|hello|hey|hey there)/i.test(text.trim());
 }
 
-function getMissingField(parsed, currentMin, currentMuscle, currentDiff, currentLoc) {
-  if (!currentMin && !parsed.minutes) return 'minutes';
-  if (!currentMuscle && !parsed.muscle) return 'muscle';
-  if (!currentDiff && !parsed.difficulty) return 'difficulty';
-  if (!currentLoc && !parsed.location) return 'location';
-  return null;
-}
-
 appendMessage("Hello! I'm FitBuddy AI, your fitness coach. To get started, I need a few details from you:\nHow many minutes do you want your workout to be?\nWhat is your target muscle group?\nWhat is your difficulty level (beginner, intermediate, or advanced)?\nAre you at the gym or at home?", 'ai');
 
 chatForm.addEventListener('submit', async (e) => {
@@ -141,30 +167,27 @@ chatForm.addEventListener('submit', async (e) => {
   appendMessage(text, 'user');
 
   const typing = appendTyping();
-  setStatus('Thinking…');
+  setStatus('Thinking');
 
   try {
     await new Promise(r => setTimeout(r, 400));
 
     const parsed = parseAllInputs(text);
 
-    // If user said hi, start asking
     if (convo.stage === 'idle' && isGreeting(text)) {
       convo.stage = 'await_minutes';
       removeNode(typing);
-      appendMessage("Great — how many minutes do you have for this session?", 'ai');
+      appendMessage("Great  how many minutes do you have for this session?", 'ai');
       setStatus('');
       return;
     }
 
-    // If idle and user provides some info, smart fill and ask for missing
     if (convo.stage === 'idle' && !isGreeting(text)) {
       convo.minutes = parsed.minutes || convo.minutes;
       convo.muscle = parsed.muscle || convo.muscle;
       convo.difficulty = parsed.difficulty || convo.difficulty;
       convo.location = parsed.location || convo.location;
 
-      // If all 4 are now filled, generate workout
       if (convo.minutes && convo.muscle && convo.difficulty && convo.location) {
         removeNode(typing);
         const plan = generateWorkout(convo.minutes, convo.muscle, convo.difficulty, convo.location);
@@ -174,7 +197,6 @@ chatForm.addEventListener('submit', async (e) => {
         return;
       }
 
-      // Otherwise ask for the first missing field
       removeNode(typing);
       if (!convo.minutes) {
         convo.stage = 'await_minutes';
@@ -193,13 +215,11 @@ chatForm.addEventListener('submit', async (e) => {
       return;
     }
 
-    // Fill in parsed data
     if (parsed.minutes) convo.minutes = parsed.minutes;
     if (parsed.muscle) convo.muscle = parsed.muscle;
     if (parsed.difficulty) convo.difficulty = parsed.difficulty;
     if (parsed.location) convo.location = parsed.location;
 
-    // Check if all 4 fields are now complete
     if (convo.minutes && convo.muscle && convo.difficulty && convo.location) {
       removeNode(typing);
       const plan = generateWorkout(convo.minutes, convo.muscle, convo.difficulty, convo.location);
@@ -209,7 +229,6 @@ chatForm.addEventListener('submit', async (e) => {
       return;
     }
 
-    // Otherwise move to next missing field
     removeNode(typing);
     if (!convo.minutes) {
       convo.stage = 'await_minutes';
@@ -228,7 +247,7 @@ chatForm.addEventListener('submit', async (e) => {
 
   } catch (err) {
     removeNode(typing);
-    appendMessage("Sorry — something went wrong. Try again.", 'system');
+    appendMessage("Sorry  something went wrong. Try again.", 'system');
     setStatus(err.message || String(err));
   }
 });
